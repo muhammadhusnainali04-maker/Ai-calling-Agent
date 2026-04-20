@@ -1,0 +1,112 @@
+{
+  "agent_id": "",
+  "channel": "voice",
+  "last_modification_timestamp": 1776599113646,
+  "agent_name": "Outbound Lead Reactivation Agent Retell",
+  "response_engine": {
+    "type": "conversation-flow",
+    "version": 0,
+    "conversation_flow_id": "conversation_flow_be64afe559ff"
+  },
+  "webhook_url": "https://n8n.laconsultingcorp.com/webhook-test/retell-call-ended",
+  "language": "en-US",
+  "data_storage_setting": "everything",
+  "opt_in_signed_url": false,
+  "version": 0,
+  "is_published": false,
+  "post_call_analysis_model": "gpt-4.1",
+  "pii_config": {
+    "mode": "post_call",
+    "categories": []
+  },
+  "handbook_config": {
+    "default_personality": true,
+    "ai_disclosure": true
+  },
+  "post_call_analysis_data": [
+    {
+      "type": "string",
+      "name": "lead_status",
+      "description": "What was the outcome of the call? Answer with exactly one word: interested, not_interested, or callback_requested"
+    },
+    {
+      "name": "call_status",
+      "description": "Based on the conversation, was the patient interested in booking an appointment? Choose interested or not_interested",
+      "type": "string",
+      "examples": []
+    }
+  ],
+  "voice_id": "11labs-Willa",
+  "fallback_voice_ids": [],
+  "max_call_duration_ms": 3600000,
+  "interruption_sensitivity": 0.9,
+  "normalize_for_speech": false,
+  "allow_user_dtmf": true,
+  "user_dtmf_options": {},
+  "webhook_events": [
+    "call_analyzed",
+    "call_ended"
+  ],
+  "conversationFlow": {
+    "conversation_flow_id": "conversation_flow_be64afe559ff",
+    "version": 0,
+    "global_prompt": "You are Alex, an outbound booking assistant for a dental clinic. You are calling old leads who previously showed interest but never booked an appointment.\nYour Goal: Re-engage the lead, find out if they still need dental services, and book them for a free consultation this week.\nRules:\nBe warm, conversational, and not overly aggressive.\nIf they say they already got the work done elsewhere, politely congratulate them and end the call.\nIf they say they are busy, ask for a better time to call back.\nIf they are interested, ask them what day works best for a quick check-up.",
+    "nodes": [
+      {
+        "instruction": {
+          "type": "static_text",
+          "text": "Hi, this is Alex calling from LA clinic. I saw you looked into getting some dental work done a few months ago, and I was just calling to see if you were still looking for help with that?"
+        },
+        "name": "Welcome Node",
+        "edges": [
+          {
+            "destination_node_id": "end-call-node-1776199747592",
+            "id": "edge-1776450435061-gt5rwu2z4",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "when user say bye"
+            }
+          }
+        ],
+        "start_speaker": "agent",
+        "id": "start-node-1776199747592",
+        "type": "conversation",
+        "display_position": {
+          "x": 342,
+          "y": 414
+        }
+      },
+      {
+        "name": "End Call",
+        "id": "end-call-node-1776199747592",
+        "type": "end",
+        "display_position": {
+          "x": 742,
+          "y": 433
+        },
+        "instruction": {
+          "type": "prompt",
+          "text": "Politely end the call"
+        }
+      }
+    ],
+    "start_node_id": "start-node-1776199747592",
+    "start_speaker": "agent",
+    "model_choice": {
+      "type": "cascading",
+      "model": "gpt-4.1"
+    },
+    "tool_call_strict_mode": true,
+    "knowledge_base_ids": [],
+    "kb_config": {
+      "top_k": 3,
+      "filter_score": 0.6
+    },
+    "begin_tag_display_position": {
+      "x": 122,
+      "y": 333
+    },
+    "is_published": false,
+    "is_transfer_cf": false
+  }
+}
