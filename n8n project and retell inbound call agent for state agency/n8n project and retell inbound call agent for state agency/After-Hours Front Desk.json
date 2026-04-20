@@ -1,0 +1,267 @@
+{
+  "name": "After-Hours Front Desk",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "/retell-call-ended",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -144,
+        0
+      ],
+      "id": "1b949b1c-6495-454b-aec4-77773bf34f94",
+      "name": "Webhook",
+      "webhookId": "859bd602-2921-4244-9e62-ecb5af84a5e8"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "8b0b2ccf-2f82-44da-8173-cb9590c33d47",
+              "leftValue": "={{$now.setZone('Asia/Karachi').hour }}",
+              "rightValue": 18,
+              "operator": {
+                "type": "number",
+                "operation": "gte"
+              }
+            },
+            {
+              "id": "6e3596d5-1170-4b13-a9ac-1797c7b06250",
+              "leftValue": "={{$now.setZone('Asia/Karachi').hour}}",
+              "rightValue": 9,
+              "operator": {
+                "type": "number",
+                "operation": "lt"
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        208,
+        0
+      ],
+      "id": "a8d4fd4c-06f8-4c38-b744-adaaad4b84e4",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://services.leadconnectorhq.com/contacts/upsert",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": " Bearer pit-68189f0b-c67e-4413-a784-77b16a48ecc9"
+            },
+            {
+              "name": "Version",
+              "value": " 2021-07-28  "
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"firstName\":   \"{{ $json.caller_name.split(' ')[0] }}\",\n  \"lastName\":    \"{{ $json.caller_name.split(' ')[1] ?? '' }}\",\n  \"phone\":       \"{{ $json.caller_phone }}\",\n  \"source\":      \"After Hours Call\",\n  \"tags\":        [\"after-hours-lead\"],\n  \"customFields\": [\n    {\n      \"key\":   \"call_reason\",\n      \"value\": \"{{ $json.call_reason }}\"\n    }\n  ],\n  \"locationId\":  \"KS4fLmThCPzTCQy9DLOK\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        416,
+        -48
+      ],
+      "id": "598027c5-e8c4-47ba-85c4-1167b27b09b8",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://services.leadconnectorhq.com/contacts/{{ $('HTTP Request').item.json.contact.id }}/tasks",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": " Bearer pit-68189f0b-c67e-4413-a784-77b16a48ecc9"
+            },
+            {
+              "name": "Version",
+              "value": "2021-07-28"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"title\": \"Call back: {{ $('HTTP Request').item.json.contact.firstName }}\",\n  \"body\": \"After hours call received. Reason: {{ $('If').item.json.call_reason }}\",\n  \"dueDate\": \"{{ $now.plus(8, 'hours').toISO() }}\",\n  \"status\": \"incomplete\",\n  \"contactId\": \"{{ $('HTTP Request').item.json.contact.id }}\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        832,
+        -48
+      ],
+      "id": "ef9c5df9-29e8-4e0a-8cdc-03e8bc76d4b2",
+      "name": "HTTP Request1"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        416,
+        160
+      ],
+      "id": "947b4597-2a21-4767-89e5-bd64aae98723",
+      "name": "No Operation, do nothing"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://services.leadconnectorhq.com/conversations/messages",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": " Bearer pit-68189f0b-c67e-4413-a784-77b16a48ecc9"
+            },
+            {
+              "name": "Version",
+              "value": "2021-07-28"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"type\": \"SMS\",\n  \"contactId\": \"{{ $json.contact.id }}\",\n  \"message\": \"Hi {{ $json.contact.firstName }}, thanks for calling! Our specialist will call you back tomorrow morning at 9 AM. — LA Clinic\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        624,
+        -48
+      ],
+      "id": "bcd086f4-9864-4c8c-8eb4-9c8864659780",
+      "name": "HTTP Request2"
+    },
+    {
+      "parameters": {
+        "jsCode": "const call = $json.body.call;\n\nconst vars = call.collected_dynamic_variables || {};\n\nconst callerName = vars.caller_name || \"Unknown\";\nconst callerPhone = vars.caller_phone || \"\";\nconst callReason = vars.call_reason || \"property inquiry\";\n\n// Clean phone number\nconst cleanPhone = callerPhone.replace(/[^0-9+]/g, '');\nconst validPhone = cleanPhone.length >= 7 ? cleanPhone : null;\n\nreturn [{\n  json: {\n    caller_name: callerName,\n    caller_phone: validPhone,\n    call_reason: callReason,\n    call_id: call.call_id\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        16,
+        0
+      ],
+      "id": "61f8d15e-5b75-421c-a80e-ac78184bf992",
+      "name": "Code in JavaScript"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "No Operation, do nothing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request2": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "94b5313d-47eb-43a7-a355-fe65f3a37c04",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "ccef1841c8d66a631655540fa8eb5d7cb7f23c622506dc60eead49412682a94f"
+  },
+  "id": "A8qbHB2r7PR8yJkc",
+  "tags": []
+}
